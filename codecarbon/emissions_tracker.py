@@ -159,6 +159,7 @@ class BaseEmissionsTracker(ABC):
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
+        ignore_gpu: Optional[bool] = _sentinel,
         pue: Optional[int] = _sentinel,
     ):
         """
@@ -267,7 +268,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
-        if isinstance(self._gpu_ids, str):
+        if not ignore_gpu and isinstance(self._gpu_ids, str):
             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
@@ -279,7 +280,7 @@ class BaseEmissionsTracker(ABC):
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
-        if gpu.is_gpu_details_available():
+        if not ignore_gpu and gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             gpu_devices = GPU.from_utils(self._gpu_ids)
             self._hardware.append(gpu_devices)
@@ -892,6 +893,7 @@ def track_emissions(
     co2_signal_api_token: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     default_cpu_power: Optional[int] = _sentinel,
+    ignore_gpu: Optional[bool] = _sentinel,
     pue: Optional[int] = _sentinel,
 ):
     """
